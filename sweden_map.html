@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sweden Map</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .map-container {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+            justify-content: center;
+        }
+        
+        .map-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        
+        #country-map {
+            width: 800px;
+            height: auto;
+            border: 2px solid #333;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .data-panel {
+            min-width: 400px;
+            max-width: 400px;
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            max-height: 800px;
+            overflow-y: auto;
+        }
+        
+        .data-panel h3 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #007acc;
+            padding-bottom: 10px;
+        }
+        
+        .city-list {
+            margin-bottom: 20px;
+        }
+        
+        .city-item {
+            background: white;
+            margin-bottom: 10px;
+            padding: 12px;
+            border-radius: 5px;
+            border-left: 4px solid #FF5722;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .city-item:hover {
+            background: #f0f0f0;
+            transform: translateX(5px);
+        }
+        
+        .city-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        
+        .city-details {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.4;
+        }
+        
+        .coordinates {
+            font-family: monospace;
+            background: #e8e8e8;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        
+        .city-marker {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+        
+        .city-marker:hover {
+            transform: scale(1.5);
+            background: #D32F2F !important;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5) !important;
+        }
+        
+        .toggle-info {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            font-size: 14px;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        
+        .toggle-info:hover {
+            background: #005a9e;
+            transform: translateY(-2px);
+        }
+        
+        .debug-info {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 12px;
+            max-width: 300px;
+            display: none;
+            z-index: 1001;
+        }
+        
+        .debug-info.show {
+            display: block;
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sweden Map</h1>
+        <div class="map-container">
+            <div class="map-wrapper">
+                <!-- Country SVG Map from SimpleMaps -->
+                <div style="position: relative; display: inline-block;">
+                    <img id="country-map" 
+                         src="https://simplemaps.com/static/svg/country/se/admin1/se.svg" 
+                         alt="Sweden Map" 
+                         style="width: 800px; height: auto; border: 2px solid #333; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+                    
+                    <!-- City markers will be dynamically generated here -->
+                </div>
+            </div>
+            
+            <div class="data-panel">
+                <h3>Swedish Cities Data</h3>
+                <div class="city-list" id="city-list">
+                    <!-- City data will be populated here -->
+                </div>
+                
+                <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd;">
+                    <h4 style="margin: 0 0 10px 0; color: #666;">Map Statistics</h4>
+                    <div style="font-size: 12px; color: #888;">
+                        <div>Total Cities: <span id="city-count">0</span></div>
+                        <div>Map Bounds: 55.0°N - 69.5°N, 10.5°E - 24.5°E</div>
+                        <div>Source: <a href="https://simplemaps.com/static/svg/country/se/admin1/se.svg" target="_blank">SimpleMaps</a></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toggle button for debug info -->
+    <button class="toggle-info" onclick="toggleDebugInfo()">
+        🔧 Debug Info
+    </button>
+    
+    <!-- Debug info panel -->
+    <div class="debug-info" id="debug-info">
+        <h4 style="margin: 0 0 10px 0;">Debug Information</h4>
+        <p><strong>Current Status:</strong> <span id="data-source">Loading...</span></p>
+        <p><strong>Features:</strong></p>
+        <ul style="margin: 5px 0; padding-left: 15px; font-size: 11px;">
+            <li>Embedded data configuration (no external files)</li>
+            <li>GPS coordinate-based positioning</li>
+            <li>Calibration markers (Red=N, Green=S, Blue=W, Yellow=E)</li>
+            <li>Population-based marker sizing</li>
+            <li>Capital city highlighting (gold border)</li>
+        </ul>
+        <p><strong>Instructions:</strong></p>
+        <ul style="margin: 5px 0; padding-left: 15px; font-size: 11px;">
+            <li>Open browser console (F12) for coordinate logs</li>
+            <li>Edit MAP_DATA at top of HTML to add cities</li>
+            <li>After editing, run <code>refreshMap()</code> in console</li>
+            <li>Change CURRENT_COUNTRY variable to switch maps</li>
+            <li>Works offline - no server required</li>
+        </ul>
+    </div>
+    
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        // ===== MAP DATA CONFIGURATION =====
+        // Edit this section to add cities or create new countries
+        const MAP_DATA = {
+            "countries": {
+                "sweden": {
+                    "name": "Sweden",
+                    "map_source": "https://simplemaps.com/static/svg/country/se/admin1/se.svg",
+                    "bounds": {
+                        "north": 69.5,
+                        "south": 55.1,
+                        "west": 4.5,
+                        "east": 30
+                    },
+                    "padding": {
+                        "top": 0.05,
+                        "bottom": 0.05,
+                        "left": 0.05,
+                        "right": 0.05
+                    },
+                    "cities": {
+                        "stockholm": {
+                            "name": "Stockholm",
+                            "lat": 59.3293,
+                            "lng": 18.0686,
+                            "population": 975551,
+                            "population_display": "975,551",
+                            "region": "Stockholm County",
+                            "capital": true
+                        },
+                        "gothenburg": {
+                            "name": "Gothenburg",
+                            "lat": 57.7089,
+                            "lng": 11.9746,
+                            "population": 579281,
+                            "population_display": "579,281",
+                            "region": "Västra Götaland County",
+                            "capital": false
+                        },
+                        "malmo": {
+                            "name": "Malmö",
+                            "lat": 55.6050,
+                            "lng": 13.0038,
+                            "population": 347949,
+                            "population_display": "347,949",
+                            "region": "Skåne County",
+                            "capital": false
+                        },
+                        "uppsala": {
+                            "name": "Uppsala",
+                            "lat": 59.8586,
+                            "lng": 17.6389,
+                            "population": 230767,
+                            "population_display": "230,767",
+                            "region": "Uppsala County",
+                            "capital": false
+                        },
+                        "orebro": {
+                            "name": "Örebro",
+                            "lat": 59.2741,
+                            "lng": 15.2066,
+                            "population": 126009,
+                            "population_display": "126,009",
+                            "region": "Örebro County",
+                            "capital": false
+                        },
+                        "linkoping": {
+                            "name": "Linköping",
+                            "lat": 58.4108,
+                            "lng": 15.6214,
+                            "population": 164616,
+                            "population_display": "164,616",
+                            "region": "Östergötland County",
+                            "capital": false
+                        },
+                        "helsingborg": {
+                            "name": "Helsingborg",
+                            "lat": 56.0465,
+                            "lng": 12.6945,
+                            "population": 147734,
+                            "population_display": "147,734",
+                            "region": "Skåne County",
+                            "capital": false
+                        },
+                        "jonkoping": {
+                            "name": "Jönköping",
+                            "lat": 57.7826,
+                            "lng": 14.1618,
+                            "population": 140312,
+                            "population_display": "140,312",
+                            "region": "Jönköping County",
+                            "capital": false
+                        },
+                        "norrkoping": {
+                            "name": "Norrköping",
+                            "lat": 58.5877,
+                            "lng": 16.1924,
+                            "population": 143171,
+                            "population_display": "143,171",
+                            "region": "Östergötland County",
+                            "capital": false
+                        },
+                        "lund": {
+                            "name": "Lund",
+                            "lat": 55.7047,
+                            "lng": 13.1910,
+                            "population": 94703,
+                            "population_display": "94,703",
+                            "region": "Skåne County",
+                            "capital": false
+                        }
+                    }
+                }
+            }
+        };
+        // ===== END MAP DATA CONFIGURATION =====
+        
+        // Configuration
+        const CURRENT_COUNTRY = 'sweden'; // Change this to switch countries
+        
+        // Global variables
+        let mapData = null;
+        let currentCountryData = null;
+        
+        // Load map data
+        function loadMapData() {
+            try {
+                mapData = MAP_DATA;
+                currentCountryData = mapData.countries[CURRENT_COUNTRY];
+                
+                if (!currentCountryData) {
+                    throw new Error(`Country '${CURRENT_COUNTRY}' not found in map data`);
+                }
+                
+                // Validate bounds
+                const bounds = currentCountryData.bounds;
+                if (bounds.north <= bounds.south) {
+                    console.warn(`⚠️ Invalid bounds: North (${bounds.north}) should be greater than South (${bounds.south})`);
+                }
+                if (bounds.east <= bounds.west) {
+                    console.warn(`⚠️ Invalid bounds: East (${bounds.east}) should be greater than West (${bounds.west})`);
+                }
+                
+                console.log('✅ Map data loaded:', currentCountryData.name);
+                console.log(`📍 Loaded ${Object.keys(currentCountryData.cities).length} cities`);
+                console.log('📐 Bounds validation:', {
+                    north: bounds.north,
+                    south: bounds.south,
+                    west: bounds.west,
+                    east: bounds.east,
+                    latRange: bounds.north - bounds.south,
+                    lngRange: bounds.east - bounds.west
+                });
+                
+                // Update debug info
+                const dataSourceElement = document.getElementById('data-source');
+                if (dataSourceElement) {
+                    dataSourceElement.textContent = 'Embedded data loaded successfully';
+                    dataSourceElement.style.color = '#4CAF50';
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('❌ Error loading map data:', error);
+                showError(`Failed to load map data. ${error.message}`);
+                return false;
+            }
+        }
+        
+        // Show error message
+        function showError(message) {
+            const mapContainer = document.querySelector('.map-container');
+            mapContainer.innerHTML = `
+                <div style="text-align: center; padding: 50px; color: #d32f2f;">
+                    <h3>Error Loading Map</h3>
+                    <p>${message}</p>
+                    <p><small>Check the MAP_DATA configuration at the top of this HTML file.</small></p>
+                </div>
+            `;
+        }
+        
+        // Convert GPS coordinates to map pixel coordinates
+        function gpsToMapCoordinates(lat, lng, mapImg) {
+            const mapRect = mapImg.getBoundingClientRect();
+            const mapWidth = mapRect.width;
+            const mapHeight = mapRect.height;
+            
+            const bounds = currentCountryData.bounds;
+            const padding = currentCountryData.padding;
+            
+            // Calculate relative position within country's bounds
+            const latRange = bounds.north - bounds.south;
+            const lngRange = bounds.east - bounds.west;
+            
+            // Normalize coordinates (0 to 1)
+            let latPercent = (bounds.north - lat) / latRange;
+            let lngPercent = (lng - bounds.west) / lngRange;
+            
+            // Apply padding to account for SVG margins
+            const usableWidth = mapWidth * (1 - padding.left - padding.right);
+            const usableHeight = mapHeight * (1 - padding.top - padding.bottom);
+            
+            // Convert to pixel coordinates with padding
+            const x = (padding.left * mapWidth) + (lngPercent * usableWidth);
+            const y = (padding.top * mapHeight) + (latPercent * usableHeight);
+            
+            // Debug logging
+            console.log(`${lat}, ${lng} -> ${x.toFixed(1)}, ${y.toFixed(1)} (${latPercent.toFixed(3)}, ${lngPercent.toFixed(3)})`);
+            
+            // Clamp coordinates to map bounds
+            const clampedX = Math.max(0, Math.min(mapWidth, x));
+            const clampedY = Math.max(0, Math.min(mapHeight, y));
+            
+            return { x: clampedX, y: clampedY };
+        }
+        
+        // Create city marker element
+        function createCityMarker(cityKey, cityInfo, position) {
+            const marker = document.createElement('div');
+            marker.className = 'city-marker';
+            marker.setAttribute('data-city', cityKey);
+            
+            // Size based on population (larger cities get bigger markers)
+            let size = 6;
+            if (cityInfo.population > 500000) size = 12;
+            else if (cityInfo.population > 200000) size = 10;
+            else if (cityInfo.population > 100000) size = 8;
+            
+            // Special styling for capitals
+            const borderColor = cityInfo.capital ? '#FFD700' : 'white';
+            const borderWidth = cityInfo.capital ? '3px' : '2px';
+            
+            marker.style.cssText = `
+                position: absolute;
+                left: ${position.x - size/2}px;
+                top: ${position.y - size/2}px;
+                width: ${size}px;
+                height: ${size}px;
+                background: #FF5722;
+                border-radius: 50%;
+                cursor: pointer;
+                border: ${borderWidth} solid ${borderColor};
+                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                z-index: 10;
+                transition: all 0.3s ease;
+            `;
+            
+            // Add event listeners
+            marker.addEventListener('mouseenter', (e) => showTooltip(e, cityKey));
+            marker.addEventListener('mouseleave', hideTooltip);
+            marker.addEventListener('mousemove', moveTooltip);
+            marker.addEventListener('click', (e) => showCityInfo(e, cityKey));
+            
+            return marker;
+        }
+        
+        // Add calibration markers for debugging
+        function addCalibrationMarkers(mapWrapper, mapImg) {
+            // Remove existing calibration markers first
+            const existingCalibrationMarkers = mapWrapper.querySelectorAll('[data-calibration]');
+            existingCalibrationMarkers.forEach(marker => marker.remove());
+            
+            const bounds = currentCountryData.bounds;
+            console.log('🎯 Adding calibration markers with bounds:', bounds);
+            
+            // Add markers at known extreme points to help calibrate
+            const calibrationPoints = [
+                { name: "North", lat: bounds.north, lng: (bounds.west + bounds.east) / 2, color: "#FF0000" },
+                { name: "South", lat: bounds.south, lng: (bounds.west + bounds.east) / 2, color: "#00FF00" },
+                { name: "West", lat: (bounds.north + bounds.south) / 2, lng: bounds.west, color: "#0000FF" },
+                { name: "East", lat: (bounds.north + bounds.south) / 2, lng: bounds.east, color: "#FFFF00" }
+            ];
+            
+            calibrationPoints.forEach(point => {
+                const position = gpsToMapCoordinates(point.lat, point.lng, mapImg);
+                console.log(`📍 ${point.name} marker: ${point.lat}, ${point.lng} -> ${position.x.toFixed(1)}, ${position.y.toFixed(1)}`);
+                
+                const marker = document.createElement('div');
+                marker.setAttribute('data-calibration', 'true');
+                marker.style.cssText = `
+                    position: absolute;
+                    left: ${position.x - 3}px;
+                    top: ${position.y - 3}px;
+                    width: 6px;
+                    height: 6px;
+                    background: ${point.color};
+                    border-radius: 50%;
+                    border: 1px solid black;
+                    z-index: 15;
+                `;
+                marker.title = `${point.name}: ${point.lat}, ${point.lng}`;
+                mapWrapper.appendChild(marker);
+            });
+            
+            console.log(`✅ Added ${calibrationPoints.length} calibration markers`);
+        }
+        
+        // Initialize map functionality
+        function initializeMap() {
+            // Load map data first
+            const dataLoaded = loadMapData();
+            if (!dataLoaded) return;
+            
+            // Update page title and map source
+            document.title = `${currentCountryData.name} Map`;
+            document.querySelector('h1').textContent = `${currentCountryData.name} Map`;
+            
+            const mapImg = document.getElementById('country-map');
+            mapImg.src = currentCountryData.map_source;
+            mapImg.alt = `${currentCountryData.name} Map`;
+            
+            const mapWrapper = mapImg.parentElement;
+            
+            // Wait for image to load
+            mapImg.onload = function() {
+                console.log('🗺️ Map loaded, dimensions:', mapImg.getBoundingClientRect());
+                console.log('📐 Current bounds:', currentCountryData.bounds);
+                
+                // Clear existing markers (both city and calibration)
+                const existingMarkers = mapWrapper.querySelectorAll('.city-marker, [data-calibration]');
+                existingMarkers.forEach(marker => marker.remove());
+                
+                // Add calibration markers for debugging
+                addCalibrationMarkers(mapWrapper, mapImg);
+                
+                // Create markers for each city
+                Object.entries(currentCountryData.cities).forEach(([cityKey, cityInfo]) => {
+                    const position = gpsToMapCoordinates(cityInfo.lat, cityInfo.lng, mapImg);
+                    const marker = createCityMarker(cityKey, cityInfo, position);
+                    mapWrapper.appendChild(marker);
+                });
+                
+                // Populate city data panel
+                populateCityDataPanel();
+                
+                console.log(`✅ ${currentCountryData.name} map initialized with GPS-positioned city markers`);
+            };
+            
+            // Handle image load errors
+            mapImg.onerror = function() {
+                showError(`Failed to load map image: ${currentCountryData.map_source}`);
+            };
+        }
+        
+        // Populate the city data panel
+        function populateCityDataPanel() {
+            const cityList = document.getElementById('city-list');
+            const cityCount = document.getElementById('city-count');
+            const dataTitle = document.querySelector('.data-panel h3');
+            
+            // Update panel title
+            dataTitle.textContent = `${currentCountryData.name} Cities Data`;
+            
+            cityList.innerHTML = '';
+            
+            // Sort cities by population (largest first)
+            const sortedCities = Object.entries(currentCountryData.cities).sort((a, b) => {
+                return b[1].population - a[1].population;
+            });
+            
+            sortedCities.forEach(([cityKey, cityInfo]) => {
+                const cityItem = document.createElement('div');
+                cityItem.className = 'city-item';
+                cityItem.setAttribute('data-city', cityKey);
+                
+                // Special styling for capitals
+                if (cityInfo.capital) {
+                    cityItem.style.borderLeftColor = '#FFD700';
+                    cityItem.style.borderLeftWidth = '6px';
+                }
+                
+                cityItem.innerHTML = `
+                    <div class="city-name">
+                        ${cityInfo.name}
+                        ${cityInfo.capital ? ' 👑' : ''}
+                    </div>
+                    <div class="city-details">
+                        <div>Population: ${cityInfo.population_display}</div>
+                        <div>Region: ${cityInfo.region}</div>
+                        <div>GPS: <span class="coordinates">${cityInfo.lat}°N, ${cityInfo.lng}°E</span></div>
+                    </div>
+                `;
+                
+                // Add click event to highlight city on map
+                cityItem.addEventListener('click', () => highlightCity(cityKey));
+                
+                cityList.appendChild(cityItem);
+            });
+            
+            // Update city count and bounds info
+            cityCount.textContent = Object.keys(currentCountryData.cities).length;
+            const bounds = currentCountryData.bounds;
+            document.querySelector('.data-panel').querySelector('div[style*="font-size: 12px"]').innerHTML = `
+                <div>Total Cities: <span id="city-count">${Object.keys(currentCountryData.cities).length}</span></div>
+                <div>Map Bounds: ${bounds.south}°N - ${bounds.north}°N, ${bounds.west}°E - ${bounds.east}°E</div>
+                <div>Source: <a href="${currentCountryData.map_source}" target="_blank">SimpleMaps</a></div>
+            `;
+        }
+        
+        // Highlight a city on the map
+        function highlightCity(cityKey) {
+            // Remove existing highlights
+            document.querySelectorAll('.city-marker').forEach(marker => {
+                marker.style.transform = '';
+                marker.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+            });
+            
+            // Remove existing city item highlights
+            document.querySelectorAll('.city-item').forEach(item => {
+                item.style.background = 'white';
+            });
+            
+            // Highlight the selected city marker
+            const cityMarker = document.querySelector(`.city-marker[data-city="${cityKey}"]`);
+            if (cityMarker) {
+                cityMarker.style.transform = 'scale(1.5)';
+                cityMarker.style.boxShadow = '0 4px 12px rgba(255, 87, 34, 0.6)';
+            }
+            
+            // Highlight the selected city item
+            const cityItem = document.querySelector(`.city-item[data-city="${cityKey}"]`);
+            if (cityItem) {
+                cityItem.style.background = '#e3f2fd';
+            }
+            
+            // Show city info
+            const city = currentCountryData.cities[cityKey];
+            if (city) {
+                console.log(`Selected: ${city.name} (${city.lat}°N, ${city.lng}°E)`);
+            }
+        }
+        
+        // Tooltip functions
+        function showTooltip(event, cityKey) {
+            const city = currentCountryData.cities[cityKey];
+            const tooltip = document.getElementById('tooltip');
+            
+            if (city) {
+                tooltip.innerHTML = `
+                    <strong>${city.name}${city.capital ? ' 👑' : ''}</strong><br>
+                    Population: ${city.population_display}<br>
+                    Region: ${city.region}<br>
+                    <small>Lat: ${city.lat}°, Lng: ${city.lng}°</small>
+                `;
+            } else {
+                tooltip.textContent = cityKey;
+            }
+            
+            tooltip.style.display = 'block';
+            moveTooltip(event);
+        }
+        
+        function hideTooltip() {
+            document.getElementById('tooltip').style.display = 'none';
+        }
+        
+        function moveTooltip(event) {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.style.left = (event.pageX + 10) + 'px';
+            tooltip.style.top = (event.pageY - 30) + 'px';
+        }
+        
+        function showCityInfo(event, cityKey) {
+            const city = currentCountryData.cities[cityKey];
+            
+            if (city) {
+                alert(`${city.name}${city.capital ? ' (Capital)' : ''}\n\nPopulation: ${city.population_display}\nRegion: ${city.region}\nCoordinates: ${city.lat}°N, ${city.lng}°E\n\nClick OK to continue exploring the map.`);
+            }
+        }
+        
+        // Toggle debug info panel
+        function toggleDebugInfo() {
+            const debugInfo = document.getElementById('debug-info');
+            debugInfo.classList.toggle('show');
+        }
+        
+        // Refresh map with current data (useful after editing MAP_DATA)
+        function refreshMap() {
+            console.log('🔄 Refreshing map with current data...');
+            
+            // Reload the data
+            const dataLoaded = loadMapData();
+            if (!dataLoaded) return;
+            
+            // Re-initialize the map
+            const mapImg = document.getElementById('country-map');
+            if (mapImg.complete) {
+                mapImg.onload();
+            } else {
+                // If image isn't loaded yet, wait for it
+                mapImg.addEventListener('load', mapImg.onload);
+            }
+        }
+        
+        // Make refreshMap available globally for console use
+        window.refreshMap = refreshMap;
+        
+        // Helper function to test different bounds
+        window.testBounds = function(north, south, west, east) {
+            console.log(`🧪 Testing bounds: N${north}° S${south}° W${west}° E${east}°`);
+            
+            // Validate bounds
+            if (north <= south) {
+                console.error(`❌ Invalid: North (${north}) must be greater than South (${south})`);
+                return;
+            }
+            if (east <= west) {
+                console.error(`❌ Invalid: East (${east}) must be greater than West (${west})`);
+                return;
+            }
+            
+            // Temporarily update bounds
+            const originalBounds = {...currentCountryData.bounds};
+            currentCountryData.bounds = {north, south, west, east};
+            
+            // Refresh map
+            refreshMap();
+            
+            // Restore original bounds after 5 seconds
+            setTimeout(() => {
+                console.log('🔄 Restoring original bounds...');
+                currentCountryData.bounds = originalBounds;
+                refreshMap();
+            }, 5000);
+        };
+        
+        // Recalculate positions on window resize
+        window.addEventListener('resize', () => {
+            if (currentCountryData) {
+                const mapImg = document.getElementById('country-map');
+                if (mapImg.complete) {
+                    mapImg.onload();
+                }
+            }
+        });
+        
+        // Initialize when page loads
+        window.addEventListener('load', initializeMap);
+    </script>
+</body>
+</html>
