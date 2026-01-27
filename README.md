@@ -4,7 +4,7 @@ An interactive web application for exploring and filtering towns and cities base
 
 ## Features
 
-- **Interactive Sweden Map** - Visual representation of towns across a country
+- **Interactive Country Map** - Visual representation of towns across a country
 - **Population Filter** - Filter towns by minimum population to highlight specific city sizes
 - **Geographic Filter** - Filter towns by longitude and latitude coordinates
 
