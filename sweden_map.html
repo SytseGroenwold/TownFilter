@@ -58,6 +58,73 @@
             overflow-y: auto;
         }
         
+        .size-control {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .size-control h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .size-slider {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .size-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #007acc;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .size-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #007acc;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .size-value {
+            min-width: 40px;
+            text-align: center;
+            font-weight: bold;
+            color: #007acc;
+            font-size: 12px;
+        }
+        
+        .size-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
         .data-panel h3 {
             margin-top: 0;
             color: #333;
@@ -78,11 +145,53 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             cursor: pointer;
             transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
         
         .city-item:hover {
             background: #f0f0f0;
             transform: translateX(5px);
+        }
+        
+        .city-item.hidden {
+            opacity: 0.5;
+            border-left-color: #ccc;
+        }
+        
+        .city-content {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .city-toggle {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin-left: 10px;
+            min-width: 50px;
+            text-align: center;
+        }
+        
+        .city-toggle:hover {
+            background: #005a9e;
+            transform: scale(1.05);
+        }
+        
+        .city-toggle.hidden {
+            background: #ccc;
+            color: #666;
+        }
+        
+        .city-toggle.hidden:hover {
+            background: #999;
         }
         
         .city-name {
@@ -216,6 +325,119 @@
             
             <div class="data-panel">
                 <h3>Swedish Cities Data</h3>
+                
+                <!-- Size Control -->
+                <div class="size-control">
+                    <h4>🔍 City Marker Size</h4>
+                    <div class="slider-container">
+                        <span style="font-size: 10px;">Small</span>
+                        <input type="range" 
+                               class="size-slider" 
+                               id="sizeSlider" 
+                               min="0.5" 
+                               max="3.0" 
+                               step="0.1" 
+                               value="1.0"
+                               oninput="updateMarkerSizes(this.value)">
+                        <span style="font-size: 10px;">Large</span>
+                    </div>
+                    <div class="size-labels">
+                        <span>0.5x</span>
+                        <span class="size-value" id="sizeValue">1.0x</span>
+                        <span>3.0x</span>
+                    </div>
+                </div>
+                
+                <!-- Visibility Controls -->
+                <div class="size-control">
+                    <h4>👁️ City Visibility</h4>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <button onclick="showAllCities()" style="flex: 1; padding: 8px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">Show All</button>
+                        <button onclick="hideAllCities()" style="flex: 1; padding: 8px; background: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">Hide All</button>
+                    </div>
+                    <div style="font-size: 11px; color: #666; text-align: center;">
+                        <span id="visibleCount">200</span> of <span id="totalCount">200</span> cities visible
+                    </div>
+                </div>
+                
+                <!-- Population Filter -->
+                <div class="size-control">
+                    <h4>📊 Population Filter</h4>
+                    <div style="margin-bottom: 10px;">
+                        <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">Hide cities with population above:</label>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="number" 
+                                   id="populationFilter" 
+                                   placeholder="e.g. 100000"
+                                   style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;"
+                                   oninput="applyFilters()">
+                            <button onclick="clearPopulationFilter()" 
+                                    style="padding: 8px 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">Clear</button>
+                        </div>
+                    </div>
+                    <div style="font-size: 10px; color: #888; line-height: 1.3;">
+                        <div>💡 Examples:</div>
+                        <div style="margin-left: 10px;">
+                            • <a href="#" onclick="setPopulationFilter(50000)" style="color: #007acc; text-decoration: none;">50,000</a> - Hide major cities
+                        </div>
+                        <div style="margin-left: 10px;">
+                            • <a href="#" onclick="setPopulationFilter(100000)" style="color: #007acc; text-decoration: none;">100,000</a> - Hide large cities
+                        </div>
+                        <div style="margin-left: 10px;">
+                            • <a href="#" onclick="setPopulationFilter(10000)" style="color: #007acc; text-decoration: none;">10,000</a> - Show only small towns
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Longitude Filter -->
+                <div class="size-control">
+                    <h4>🌍 Geographic Filter</h4>
+                    <div style="margin-bottom: 15px;">
+                        <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">Hide cities with longitude below:</label>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="number" 
+                                   id="longitudeFilter" 
+                                   placeholder="e.g. 15.0"
+                                   step="0.1"
+                                   min="10"
+                                   max="25"
+                                   style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;"
+                                   oninput="applyFilters()">
+                            <button onclick="clearLongitudeFilter()" 
+                                    style="padding: 8px 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">Clear</button>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">Hide cities with latitude below:</label>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="number" 
+                                   id="latitudeFilter" 
+                                   placeholder="e.g. 60.0"
+                                   step="0.1"
+                                   min="55"
+                                   max="70"
+                                   style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;"
+                                   oninput="applyFilters()">
+                            <button onclick="clearLatitudeFilter()" 
+                                    style="padding: 8px 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">Clear</button>
+                        </div>
+                    </div>
+                    <div style="font-size: 10px; color: #888; line-height: 1.3;">
+                        <div>💡 Longitude Examples (°E):</div>
+                        <div style="margin-left: 10px;">
+                            • <a href="#" onclick="setLongitudeFilter(15.0)" style="color: #007acc; text-decoration: none;">15.0°</a> - Show eastern Sweden
+                            • <a href="#" onclick="setLongitudeFilter(18.0)" style="color: #007acc; text-decoration: none;">18.0°</a> - Far east
+                            • <a href="#" onclick="setLongitudeFilter(12.0)" style="color: #007acc; text-decoration: none;">12.0°</a> - Hide west coast
+                        </div>
+                        <div style="margin-top: 8px;">💡 Latitude Examples (°N):</div>
+                        <div style="margin-left: 10px;">
+                            • <a href="#" onclick="setLatitudeFilter(60.0)" style="color: #28a745; text-decoration: none;">60.0°</a> - Show northern Sweden
+                            • <a href="#" onclick="setLatitudeFilter(63.0)" style="color: #28a745; text-decoration: none;">63.0°</a> - Show far north
+                            • <a href="#" onclick="setLatitudeFilter(57.0)" style="color: #28a745; text-decoration: none;">57.0°</a> - Hide southern regions
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="city-list" id="city-list">
                     <!-- City data will be populated here -->
                 </div>
@@ -259,6 +481,15 @@
     <div class="tooltip" id="tooltip"></div>
 
     <script>
+        // Global size multiplier for markers
+        let sizeMultiplier = 1.0;
+        
+        // Track city visibility state
+        let cityVisibility = {};
+        let populationFilterValue = null;
+        let longitudeFilterValue = null;
+        let latitudeFilterValue = null;
+        
         // Sweden geographic bounds - adjusted for SimpleMaps SVG
         // These may need fine-tuning based on the actual SVG projection
         const SWEDEN_BOUNDS = {
@@ -280,37 +511,1351 @@
         const MAP_WIDTH = 400;
         const MAP_HEIGHT = 600; // Will be calculated based on aspect ratio
         
-        // City data with real GPS coordinates
+        // City data with real GPS coordinates - 30 largest cities in Sweden by population (2023)
         const cityData = {
             Stockholm: { 
                 lat: 59.3293, 
                 lng: 18.0686, 
-                population: "975,551", 
+                population: "1,652,895", 
                 region: "Stockholm County" 
             },
             Gothenburg: { 
                 lat: 57.7089, 
                 lng: 11.9746, 
-                population: "579,281", 
+                population: "674,529", 
                 region: "Västra Götaland County" 
             },
             Malmö: { 
                 lat: 55.6050, 
                 lng: 13.0038, 
-                population: "347,949", 
+                population: "339,316", 
                 region: "Skåne County" 
             },
             Uppsala: { 
                 lat: 59.8586, 
                 lng: 17.6389, 
-                population: "230,767", 
+                population: "174,982", 
                 region: "Uppsala County" 
+            },
+            "Upplands Väsby": { 
+                lat: 59.5186, 
+                lng: 17.9077, 
+                population: "156,517", 
+                region: "Stockholm County" 
+            },
+            Västerås: { 
+                lat: 59.6162, 
+                lng: 16.5528, 
+                population: "131,643", 
+                region: "Västmanland County" 
             },
             Örebro: { 
                 lat: 59.2741, 
                 lng: 15.2066, 
-                population: "126,009", 
+                population: "128,658", 
                 region: "Örebro County" 
+            },
+            Linköping: { 
+                lat: 58.4108, 
+                lng: 15.6214, 
+                population: "116,851", 
+                region: "Östergötland County" 
+            },
+            Helsingborg: { 
+                lat: 56.0465, 
+                lng: 12.6945, 
+                population: "116,029", 
+                region: "Skåne County" 
+            },
+            Jönköping: { 
+                lat: 57.7826, 
+                lng: 14.1618, 
+                population: "103,032", 
+                region: "Jönköping County" 
+            },
+            Lund: { 
+                lat: 55.7047, 
+                lng: 13.1910, 
+                population: "98,308", 
+                region: "Skåne County" 
+            },
+            Norrköping: { 
+                lat: 58.5877, 
+                lng: 16.1924, 
+                population: "98,229", 
+                region: "Östergötland County" 
+            },
+            Umeå: { 
+                lat: 63.8258, 
+                lng: 20.2630, 
+                population: "94,243", 
+                region: "Västerbotten County" 
+            },
+            Gävle: { 
+                lat: 60.6749, 
+                lng: 17.1413, 
+                population: "86,533", 
+                region: "Gävleborg County" 
+            },
+            Södertälje: { 
+                lat: 59.1955, 
+                lng: 17.6253, 
+                population: "78,337", 
+                region: "Stockholm County" 
+            },
+            Borås: { 
+                lat: 57.7210, 
+                lng: 12.9401, 
+                population: "75,565", 
+                region: "Västra Götaland County" 
+            },
+            Växjö: { 
+                lat: 56.8777, 
+                lng: 14.8091, 
+                population: "74,052", 
+                region: "Kronoberg County" 
+            },
+            Halmstad: { 
+                lat: 56.6745, 
+                lng: 12.8581, 
+                population: "72,979", 
+                region: "Halland County" 
+            },
+            Sundsvall: { 
+                lat: 62.3908, 
+                lng: 17.3069, 
+                population: "70,918", 
+                region: "Västernorrland County" 
+            },
+            Eskilstuna: { 
+                lat: 59.3706, 
+                lng: 16.5077, 
+                population: "70,646", 
+                region: "Södermanland County" 
+            },
+            Karlstad: { 
+                lat: 59.3793, 
+                lng: 13.5036, 
+                population: "69,615", 
+                region: "Värmland County" 
+            },
+            Östersund: { 
+                lat: 63.1792, 
+                lng: 14.6357, 
+                population: "53,992", 
+                region: "Jämtland County" 
+            },
+            Trollhättan: { 
+                lat: 58.2837, 
+                lng: 12.2886, 
+                population: "50,069", 
+                region: "Västra Götaland County" 
+            },
+            Luleå: { 
+                lat: 65.5848, 
+                lng: 22.1547, 
+                population: "49,646", 
+                region: "Norrbotten County" 
+            },
+            Tumba: { 
+                lat: 59.1986, 
+                lng: 17.8347, 
+                population: "46,893", 
+                region: "Stockholm County" 
+            },
+            Lidingö: { 
+                lat: 59.3667, 
+                lng: 18.1333, 
+                population: "44,642", 
+                region: "Stockholm County" 
+            },
+            Borlänge: { 
+                lat: 60.4858, 
+                lng: 15.4362, 
+                population: "44,299", 
+                region: "Dalarna County" 
+            },
+            Kalmar: { 
+                lat: 56.6634, 
+                lng: 16.3567, 
+                population: "42,622", 
+                region: "Kalmar County" 
+            },
+            Kristianstad: { 
+                lat: 56.0294, 
+                lng: 14.1567, 
+                population: "41,198", 
+                region: "Skåne County" 
+            },
+            Skövde: { 
+                lat: 58.3859, 
+                lng: 13.8454, 
+                population: "40,422", 
+                region: "Västra Götaland County" 
+            },
+            Falun: { 
+                lat: 60.6066, 
+                lng: 15.6255, 
+                population: "39,939", 
+                region: "Dalarna County" 
+            },
+            Nyköping: { 
+                lat: 58.7532, 
+                lng: 17.0081, 
+                population: "39,770", 
+                region: "Södermanland County" 
+            },
+            Skellefteå: { 
+                lat: 64.7507, 
+                lng: 20.9520, 
+                population: "39,146", 
+                region: "Västerbotten County" 
+            },
+            Varberg: { 
+                lat: 57.1057, 
+                lng: 12.2502, 
+                population: "38,575", 
+                region: "Halland County" 
+            },
+            Åkersberga: { 
+                lat: 59.4794, 
+                lng: 18.2972, 
+                population: "37,714", 
+                region: "Stockholm County" 
+            },
+            Karlskrona: { 
+                lat: 56.1612, 
+                lng: 15.5869, 
+                population: "36,423", 
+                region: "Blekinge County" 
+            },
+            Uddevalla: { 
+                lat: 58.3478, 
+                lng: 11.9424, 
+                population: "35,639", 
+                region: "Västra Götaland County" 
+            },
+            Vallentuna: { 
+                lat: 59.5342, 
+                lng: 18.0775, 
+                population: "33,918", 
+                region: "Stockholm County" 
+            },
+            Landskrona: { 
+                lat: 55.8708, 
+                lng: 12.8301, 
+                population: "33,859", 
+                region: "Skåne County" 
+            },
+            Örnsköldsvik: { 
+                lat: 63.2909, 
+                lng: 18.7153, 
+                population: "33,399", 
+                region: "Västernorrland County" 
+            },
+            Västerhaninge: { 
+                lat: 59.1333, 
+                lng: 18.1333, 
+                population: "31,941", 
+                region: "Stockholm County" 
+            },
+            Motala: { 
+                lat: 58.5370, 
+                lng: 15.0364, 
+                population: "31,367", 
+                region: "Östergötland County" 
+            },
+            Trelleborg: { 
+                lat: 55.3753, 
+                lng: 13.1586, 
+                population: "31,366", 
+                region: "Skåne County" 
+            },
+            Ängelholm: { 
+                lat: 56.2428, 
+                lng: 12.8624, 
+                population: "31,089", 
+                region: "Skåne County" 
+            },
+            Märsta: { 
+                lat: 59.6175, 
+                lng: 17.8544, 
+                population: "30,576", 
+                region: "Stockholm County" 
+            },
+            Falkenberg: { 
+                lat: 56.9055, 
+                lng: 12.4910, 
+                population: "29,671", 
+                region: "Halland County" 
+            },
+            Kungälv: { 
+                lat: 57.8708, 
+                lng: 11.9886, 
+                population: "28,912", 
+                region: "Västra Götaland County" 
+            },
+            Lerum: { 
+                lat: 57.7708, 
+                lng: 12.2686, 
+                population: "28,789", 
+                region: "Västra Götaland County" 
+            },
+            Alingsås: { 
+                lat: 57.9308, 
+                lng: 12.5347, 
+                population: "27,895", 
+                region: "Västra Götaland County" 
+            },
+            Karlskoga: { 
+                lat: 59.3267, 
+                lng: 14.5219, 
+                population: "27,261", 
+                region: "Örebro County" 
+            },
+            Enköping: { 
+                lat: 59.6356, 
+                lng: 17.0778, 
+                population: "26,353", 
+                region: "Uppsala County" 
+            },
+            Visby: { 
+                lat: 57.6348, 
+                lng: 18.2948, 
+                population: "26,305", 
+                region: "Gotland County" 
+            },
+            Mölnlycke: { 
+                lat: 57.6586, 
+                lng: 12.1175, 
+                population: "25,172", 
+                region: "Västra Götaland County" 
+            },
+            Gustavsberg: { 
+                lat: 59.3250, 
+                lng: 18.3833, 
+                population: "25,034", 
+                region: "Stockholm County" 
+            },
+            Sandviken: { 
+                lat: 60.6167, 
+                lng: 16.7667, 
+                population: "24,827", 
+                region: "Gävleborg County" 
+            },
+            Vänersborg: { 
+                lat: 58.3808, 
+                lng: 12.3231, 
+                population: "24,731", 
+                region: "Västra Götaland County" 
+            },
+            Katrineholm: { 
+                lat: 58.9958, 
+                lng: 16.2075, 
+                population: "23,953", 
+                region: "Södermanland County" 
+            },
+            Piteå: { 
+                lat: 65.3167, 
+                lng: 21.4833, 
+                population: "23,824", 
+                region: "Norrbotten County" 
+            },
+            Norrtälje: { 
+                lat: 59.7581, 
+                lng: 18.7042, 
+                population: "23,606", 
+                region: "Stockholm County" 
+            },
+            Lidköping: { 
+                lat: 58.5053, 
+                lng: 13.1575, 
+                population: "23,585", 
+                region: "Västra Götaland County" 
+            },
+            Västervik: { 
+                lat: 57.7583, 
+                lng: 16.6375, 
+                population: "21,615", 
+                region: "Kalmar County" 
+            },
+            Ystad: { 
+                lat: 55.4297, 
+                lng: 13.8200, 
+                population: "21,259", 
+                region: "Skåne County" 
+            },
+            Eslöv: { 
+                lat: 55.8392, 
+                lng: 13.3047, 
+                population: "20,422", 
+                region: "Skåne County" 
+            },
+            Värnamo: { 
+                lat: 57.1861, 
+                lng: 14.0400, 
+                population: "20,273", 
+                region: "Jönköping County" 
+            },
+            Karlshamn: { 
+                lat: 56.1706, 
+                lng: 14.8619, 
+                population: "19,966", 
+                region: "Blekinge County" 
+            },
+            Hässleholm: { 
+                lat: 56.1589, 
+                lng: 13.7661, 
+                population: "19,760", 
+                region: "Skåne County" 
+            },
+            Oskarshamn: { 
+                lat: 57.2644, 
+                lng: 16.4486, 
+                population: "18,817", 
+                region: "Kalmar County" 
+            },
+            Nässjö: { 
+                lat: 57.6531, 
+                lng: 14.6969, 
+                population: "18,639", 
+                region: "Jönköping County" 
+            },
+            Köping: { 
+                lat: 59.5147, 
+                lng: 15.9931, 
+                population: "18,605", 
+                region: "Västmanland County" 
+            },
+            Kristinehamn: { 
+                lat: 59.3097, 
+                lng: 14.1081, 
+                population: "18,358", 
+                region: "Värmland County" 
+            },
+            Härnösand: { 
+                lat: 62.6322, 
+                lng: 17.9378, 
+                population: "18,236", 
+                region: "Västernorrland County" 
+            },
+            Falköping: { 
+                lat: 58.1731, 
+                lng: 13.5508, 
+                population: "17,924", 
+                region: "Västra Götaland County" 
+            },
+            Kumla: { 
+                lat: 59.1281, 
+                lng: 15.1419, 
+                population: "17,889", 
+                region: "Örebro County" 
+            },
+            Staffanstorp: { 
+                lat: 55.6408, 
+                lng: 13.2069, 
+                population: "17,838", 
+                region: "Skåne County" 
+            },
+            Kiruna: { 
+                lat: 67.8558, 
+                lng: 20.2253, 
+                population: "17,284", 
+                region: "Norrbotten County" 
+            },
+            Kungsängen: { 
+                lat: 59.4708, 
+                lng: 17.6708, 
+                population: "16,899", 
+                region: "Stockholm County" 
+            },
+            Hudiksvall: { 
+                lat: 61.7281, 
+                lng: 17.1053, 
+                population: "16,792", 
+                region: "Gävleborg County" 
+            },
+            Mariestad: { 
+                lat: 58.7097, 
+                lng: 13.8236, 
+                population: "16,750", 
+                region: "Västra Götaland County" 
+            },
+            Boden: { 
+                lat: 65.8256, 
+                lng: 21.6889, 
+                population: "16,644", 
+                region: "Norrbotten County" 
+            },
+            Nynäshamn: { 
+                lat: 58.9031, 
+                lng: 17.9478, 
+                population: "16,447", 
+                region: "Stockholm County" 
+            },
+            Höganäs: { 
+                lat: 56.2019, 
+                lng: 12.5597, 
+                population: "16,274", 
+                region: "Skåne County" 
+            },
+            Bålsta: { 
+                lat: 59.5708, 
+                lng: 17.5333, 
+                population: "16,205", 
+                region: "Stockholm County" 
+            },
+            Ljungby: { 
+                lat: 56.8333, 
+                lng: 13.9400, 
+                population: "16,076", 
+                region: "Kronoberg County" 
+            },
+            Avesta: { 
+                lat: 60.1458, 
+                lng: 16.1681, 
+                population: "16,055", 
+                region: "Dalarna County" 
+            },
+            Ludvika: { 
+                lat: 60.1497, 
+                lng: 15.1881, 
+                population: "15,675", 
+                region: "Dalarna County" 
+            },
+            Höllviken: { 
+                lat: 55.4167, 
+                lng: 12.9500, 
+                population: "15,669", 
+                region: "Skåne County" 
+            },
+            Kinna: { 
+                lat: 57.5086, 
+                lng: 12.6919, 
+                population: "15,507", 
+                region: "Västra Götaland County" 
+            },
+            Bunkeflostrand: { 
+                lat: 55.5500, 
+                lng: 12.9833, 
+                population: "15,488", 
+                region: "Skåne County" 
+            },
+            Strängnäs: { 
+                lat: 59.3781, 
+                lng: 17.0319, 
+                population: "15,369", 
+                region: "Södermanland County" 
+            },
+            Tranås: { 
+                lat: 58.0375, 
+                lng: 14.9781, 
+                population: "14,611", 
+                region: "Jönköping County" 
+            },
+            Skoghall: { 
+                lat: 59.3208, 
+                lng: 13.4708, 
+                population: "14,610", 
+                region: "Värmland County" 
+            },
+            Stenungsund: { 
+                lat: 58.0708, 
+                lng: 11.8186, 
+                population: "14,381", 
+                region: "Västra Götaland County" 
+            },
+            Mjölby: { 
+                lat: 58.3231, 
+                lng: 15.1281, 
+                population: "14,282", 
+                region: "Östergötland County" 
+            },
+            Arvika: { 
+                lat: 59.6553, 
+                lng: 12.5886, 
+                population: "14,186", 
+                region: "Värmland County" 
+            },
+            Oxie: { 
+                lat: 55.5333, 
+                lng: 13.1000, 
+                population: "14,040", 
+                region: "Skåne County" 
+            },
+            Höör: { 
+                lat: 55.9375, 
+                lng: 13.5419, 
+                population: "14,004", 
+                region: "Skåne County" 
+            },
+            Bollnäs: { 
+                lat: 61.3497, 
+                lng: 16.3931, 
+                population: "13,918", 
+                region: "Gävleborg County" 
+            },
+            Vetlanda: { 
+                lat: 57.4297, 
+                lng: 15.0781, 
+                population: "13,895", 
+                region: "Jönköping County" 
+            },
+            Sala: { 
+                lat: 59.9231, 
+                lng: 16.6031, 
+                population: "13,702", 
+                region: "Västmanland County" 
+            },
+            Lomma: { 
+                lat: 55.6708, 
+                lng: 13.0708, 
+                population: "13,699", 
+                region: "Skåne County" 
+            },
+            Nybro: { 
+                lat: 56.7431, 
+                lng: 15.9081, 
+                population: "13,584", 
+                region: "Kalmar County" 
+            },
+            Svedala: { 
+                lat: 55.5069, 
+                lng: 13.2319, 
+                population: "13,433", 
+                region: "Skåne County" 
+            },
+            Finspång: { 
+                lat: 58.7081, 
+                lng: 15.7681, 
+                population: "13,186", 
+                region: "Östergötland County" 
+            },
+            Mora: { 
+                lat: 61.0081, 
+                lng: 14.5431, 
+                population: "12,830", 
+                region: "Dalarna County" 
+            },
+            Ronneby: { 
+                lat: 56.2097, 
+                lng: 15.2781, 
+                population: "12,636", 
+                region: "Blekinge County" 
+            },
+            Onsala: { 
+                lat: 57.3931, 
+                lng: 12.1186, 
+                population: "12,486", 
+                region: "Halland County" 
+            },
+            Gällivare: { 
+                lat: 67.1331, 
+                lng: 20.6500, 
+                population: "12,385", 
+                region: "Norrbotten County" 
+            },
+            Ekerö: { 
+                lat: 59.2708, 
+                lng: 17.7958, 
+                population: "12,270", 
+                region: "Stockholm County" 
+            },
+            Söderhamn: { 
+                lat: 61.3031, 
+                lng: 17.0681, 
+                population: "12,038", 
+                region: "Gävleborg County" 
+            },
+            Ulricehamn: { 
+                lat: 57.7931, 
+                lng: 13.4181, 
+                population: "11,794", 
+                region: "Västra Götaland County" 
+            },
+            Fagersta: { 
+                lat: 60.0031, 
+                lng: 15.7881, 
+                population: "11,771", 
+                region: "Västmanland County" 
+            },
+            "Nödinge-Nol": { 
+                lat: 57.8708, 
+                lng: 12.0708, 
+                population: "11,658", 
+                region: "Västra Götaland County" 
+            },
+            Oxelösund: { 
+                lat: 58.6681, 
+                lng: 17.1031, 
+                population: "11,485", 
+                region: "Södermanland County" 
+            },
+            Skara: { 
+                lat: 58.3881, 
+                lng: 13.4431, 
+                population: "11,475", 
+                region: "Västra Götaland County" 
+            },
+            Bjuv: { 
+                lat: 56.0831, 
+                lng: 12.9181, 
+                population: "11,209", 
+                region: "Skåne County" 
+            },
+            Eksjö: { 
+                lat: 57.6681, 
+                lng: 14.9731, 
+                population: "11,077", 
+                region: "Jönköping County" 
+            },
+            Älmhult: { 
+                lat: 56.5531, 
+                lng: 14.1381, 
+                population: "11,053", 
+                region: "Kronoberg County" 
+            },
+            Arboga: { 
+                lat: 59.3931, 
+                lng: 15.8381, 
+                population: "10,906", 
+                region: "Västmanland County" 
+            },
+            Åhus: { 
+                lat: 55.9231, 
+                lng: 14.2931, 
+                population: "10,877", 
+                region: "Skåne County" 
+            },
+            Kävlinge: { 
+                lat: 55.7931, 
+                lng: 13.1081, 
+                population: "10,453", 
+                region: "Skåne County" 
+            },
+            Sigtuna: { 
+                lat: 59.6181, 
+                lng: 17.7231, 
+                population: "10,407", 
+                region: "Stockholm County" 
+            },
+            Hallstahammar: { 
+                lat: 59.6081, 
+                lng: 16.2231, 
+                population: "10,147", 
+                region: "Västmanland County" 
+            },
+            Åstorp: { 
+                lat: 56.1331, 
+                lng: 12.9431, 
+                population: "10,063", 
+                region: "Skåne County" 
+            },
+            Gislaved: { 
+                lat: 57.3031, 
+                lng: 13.5431, 
+                population: "10,029", 
+                region: "Jönköping County" 
+            },
+            Tibro: { 
+                lat: 58.4231, 
+                lng: 12.5181, 
+                population: "9,850", 
+                region: "Västra Götaland County" 
+            },
+            Tierp: { 
+                lat: 60.3431, 
+                lng: 17.5181, 
+                population: "9,580", 
+                region: "Uppsala County" 
+            },
+            Säffle: { 
+                lat: 59.1331, 
+                lng: 12.9231, 
+                population: "9,520", 
+                region: "Värmland County" 
+            },
+            Hedemora: { 
+                lat: 60.2781, 
+                lng: 15.9931, 
+                population: "9,450", 
+                region: "Dalarna County" 
+            },
+            Åmål: { 
+                lat: 59.0531, 
+                lng: 12.7031, 
+                population: "9,380", 
+                region: "Västra Götaland County" 
+            },
+            Filipstad: { 
+                lat: 59.7131, 
+                lng: 14.1681, 
+                population: "9,310", 
+                region: "Värmland County" 
+            },
+            Sölvesborg: { 
+                lat: 56.0531, 
+                lng: 14.5781, 
+                population: "9,240", 
+                region: "Blekinge County" 
+            },
+            Åsa: { 
+                lat: 57.2531, 
+                lng: 12.1681, 
+                population: "9,170", 
+                region: "Halland County" 
+            },
+            Torshälla: { 
+                lat: 59.4031, 
+                lng: 16.4681, 
+                population: "9,030", 
+                region: "Västmanland County" 
+            },
+            Laholm: { 
+                lat: 56.5131, 
+                lng: 13.0431, 
+                population: "8,890", 
+                region: "Halland County" 
+            },
+            Markaryd: { 
+                lat: 56.3031, 
+                lng: 13.7181, 
+                population: "8,820", 
+                region: "Kronoberg County" 
+            },
+            Åtvidaberg: { 
+                lat: 58.2031, 
+                lng: 15.9931, 
+                population: "8,750", 
+                region: "Östergötland County" 
+            },
+            Simrishamn: { 
+                lat: 55.5531, 
+                lng: 14.3531, 
+                population: "8,680", 
+                region: "Skåne County" 
+            },
+            Säter: { 
+                lat: 60.3431, 
+                lng: 15.7581, 
+                population: "8,610", 
+                region: "Dalarna County" 
+            },
+            Kungsbacka: { 
+                lat: 57.4881, 
+                lng: 12.0781, 
+                population: "8,540", 
+                region: "Halland County" 
+            },
+            Åmotfors: { 
+                lat: 59.8231, 
+                lng: 12.8431, 
+                population: "8,470", 
+                region: "Värmland County" 
+            },
+            Torsby: { 
+                lat: 60.1331, 
+                lng: 12.9931, 
+                population: "8,330", 
+                region: "Värmland County" 
+            },
+            Åseda: { 
+                lat: 56.7531, 
+                lng: 15.3431, 
+                population: "8,260", 
+                region: "Kronoberg County" 
+            },
+            Åsele: { 
+                lat: 64.1731, 
+                lng: 17.3431, 
+                population: "7,840", 
+                region: "Västerbotten County" 
+            },
+            Hagfors: { 
+                lat: 60.0231, 
+                lng: 13.6531, 
+                population: "7,750", 
+                region: "Värmland County" 
+            },
+            Malung: { 
+                lat: 60.6831, 
+                lng: 13.7131, 
+                population: "7,680", 
+                region: "Dalarna County" 
+            },
+            Kramfors: { 
+                lat: 62.9331, 
+                lng: 17.7831, 
+                population: "7,610", 
+                region: "Västernorrland County" 
+            },
+            Sollefteå: { 
+                lat: 63.1731, 
+                lng: 17.2631, 
+                population: "7,540", 
+                region: "Västernorrland County" 
+            },
+            Lycksele: { 
+                lat: 64.6031, 
+                lng: 18.6731, 
+                population: "7,470", 
+                region: "Västerbotten County" 
+            },
+            Haparanda: { 
+                lat: 65.8331, 
+                lng: 24.1431, 
+                population: "7,400", 
+                region: "Norrbotten County" 
+            },
+            Kalix: { 
+                lat: 65.8531, 
+                lng: 23.1331, 
+                population: "7,330", 
+                region: "Norrbotten County" 
+            },
+            Överkalix: { 
+                lat: 66.3231, 
+                lng: 22.8431, 
+                population: "7,260", 
+                region: "Norrbotten County" 
+            },
+            Pajala: { 
+                lat: 67.2131, 
+                lng: 23.3731, 
+                population: "7,190", 
+                region: "Norrbotten County" 
+            },
+            Älvsbyn: { 
+                lat: 65.6731, 
+                lng: 21.0031, 
+                population: "7,120", 
+                region: "Norrbotten County" 
+            },
+            Jokkmokk: { 
+                lat: 66.6031, 
+                lng: 19.8231, 
+                population: "7,050", 
+                region: "Norrbotten County" 
+            },
+            Arvidsjaur: { 
+                lat: 65.5931, 
+                lng: 19.1831, 
+                population: "6,980", 
+                region: "Norrbotten County" 
+            },
+            Arjeplog: { 
+                lat: 66.0531, 
+                lng: 17.8831, 
+                population: "6,910", 
+                region: "Norrbotten County" 
+            },
+            Malå: { 
+                lat: 65.1831, 
+                lng: 18.7031, 
+                population: "6,840", 
+                region: "Västerbotten County" 
+            },
+            Storuman: { 
+                lat: 65.0931, 
+                lng: 17.1131, 
+                population: "6,770", 
+                region: "Västerbotten County" 
+            },
+            Sorsele: { 
+                lat: 65.5331, 
+                lng: 17.5331, 
+                population: "6,700", 
+                region: "Västerbotten County" 
+            },
+            Vilhelmina: { 
+                lat: 64.6231, 
+                lng: 16.6531, 
+                population: "6,630", 
+                region: "Västerbotten County" 
+            },
+            Dorotea: { 
+                lat: 64.2631, 
+                lng: 16.4131, 
+                population: "6,560", 
+                region: "Västerbotten County" 
+            },
+            Åre: { 
+                lat: 63.3931, 
+                lng: 13.0831, 
+                population: "6,490", 
+                region: "Jämtland County" 
+            },
+            Krokom: { 
+                lat: 63.3131, 
+                lng: 14.4631, 
+                population: "6,420", 
+                region: "Jämtland County" 
+            },
+            Strömsund: { 
+                lat: 63.8431, 
+                lng: 15.5531, 
+                population: "6,350", 
+                region: "Jämtland County" 
+            },
+            Ragunda: { 
+                lat: 63.0831, 
+                lng: 16.1631, 
+                population: "6,280", 
+                region: "Jämtland County" 
+            },
+            Bräcke: { 
+                lat: 62.7531, 
+                lng: 15.4131, 
+                population: "6,210", 
+                region: "Jämtland County" 
+            },
+            Berg: { 
+                lat: 62.7131, 
+                lng: 14.5531, 
+                population: "6,140", 
+                region: "Jämtland County" 
+            },
+            Härjedalen: { 
+                lat: 62.0831, 
+                lng: 13.7831, 
+                population: "6,070", 
+                region: "Jämtland County" 
+            },
+            Krokoms: { 
+                lat: 63.3131, 
+                lng: 14.4631, 
+                population: "6,000", 
+                region: "Jämtland County" 
+            },
+            Rättvik: { 
+                lat: 60.8931, 
+                lng: 15.1131, 
+                population: "5,930", 
+                region: "Dalarna County" 
+            },
+            Leksand: { 
+                lat: 60.7331, 
+                lng: 15.0031, 
+                population: "5,860", 
+                region: "Dalarna County" 
+            },
+            Orsa: { 
+                lat: 61.1131, 
+                lng: 14.6131, 
+                population: "5,790", 
+                region: "Dalarna County" 
+            },
+            Älvdalen: { 
+                lat: 61.2131, 
+                lng: 14.0631, 
+                population: "5,720", 
+                region: "Dalarna County" 
+            },
+            Vansbro: { 
+                lat: 60.5331, 
+                lng: 14.2631, 
+                population: "5,650", 
+                region: "Dalarna County" 
+            },
+            Gagnef: { 
+                lat: 60.6031, 
+                lng: 15.1931, 
+                population: "5,580", 
+                region: "Dalarna County" 
+            },
+            Smedjebacken: { 
+                lat: 60.1631, 
+                lng: 15.4431, 
+                population: "5,510", 
+                region: "Dalarna County" 
+            },
+            Skinnskatteberg: { 
+                lat: 59.8331, 
+                lng: 15.7531, 
+                population: "5,440", 
+                region: "Västmanland County" 
+            },
+            Norberg: { 
+                lat: 60.0931, 
+                lng: 15.9131, 
+                population: "5,370", 
+                region: "Västmanland County" 
+            },
+            Surahammars: { 
+                lat: 59.7431, 
+                lng: 16.2131, 
+                population: "5,300", 
+                region: "Västmanland County" 
+            },
+            Kungsör: { 
+                lat: 59.4231, 
+                lng: 15.8331, 
+                population: "5,230", 
+                region: "Västmanland County" 
+            },
+            Heby: { 
+                lat: 59.9131, 
+                lng: 17.1631, 
+                population: "5,160", 
+                region: "Uppsala County" 
+            },
+            Älvkarleby: { 
+                lat: 60.5631, 
+                lng: 17.4431, 
+                population: "5,090", 
+                region: "Uppsala County" 
+            },
+            Östhammar: { 
+                lat: 60.2631, 
+                lng: 18.3731, 
+                population: "5,020", 
+                region: "Uppsala County" 
+            },
+            Knivsta: { 
+                lat: 59.7231, 
+                lng: 17.7931, 
+                population: "4,950", 
+                region: "Uppsala County" 
+            },
+            Håbo: { 
+                lat: 59.6131, 
+                lng: 17.5331, 
+                population: "4,880", 
+                region: "Uppsala County" 
+            },
+            Vingåker: { 
+                lat: 59.0431, 
+                lng: 15.8731, 
+                population: "4,810", 
+                region: "Södermanland County" 
+            },
+            Gnesta: { 
+                lat: 59.0531, 
+                lng: 17.3131, 
+                population: "4,740", 
+                region: "Södermanland County" 
+            },
+            Trosa: { 
+                lat: 58.8931, 
+                lng: 17.5531, 
+                population: "4,670", 
+                region: "Södermanland County" 
+            },
+            Flen: { 
+                lat: 59.0631, 
+                lng: 16.5931, 
+                population: "4,600", 
+                region: "Södermanland County" 
+            },
+            Oxelösund: { 
+                lat: 58.6681, 
+                lng: 17.1031, 
+                population: "4,530", 
+                region: "Södermanland County" 
+            },
+            Mariefred: { 
+                lat: 59.2631, 
+                lng: 16.6031, 
+                population: "4,460", 
+                region: "Södermanland County" 
+            },
+            Vadstena: { 
+                lat: 58.4531, 
+                lng: 14.8931, 
+                population: "4,390", 
+                region: "Östergötland County" 
+            },
+            Åtvidaberg: { 
+                lat: 58.2031, 
+                lng: 15.9931, 
+                population: "4,320", 
+                region: "Östergötland County" 
+            },
+            Valdemarsvik: { 
+                lat: 58.2031, 
+                lng: 16.6131, 
+                population: "4,250", 
+                region: "Östergötland County" 
+            },
+            Söderköping: { 
+                lat: 58.4831, 
+                lng: 16.3231, 
+                population: "4,180", 
+                region: "Östergötland County" 
+            },
+            Boxholm: { 
+                lat: 58.1931, 
+                lng: 15.0531, 
+                population: "4,110", 
+                region: "Östergötland County" 
+            },
+            Ydre: { 
+                lat: 57.8831, 
+                lng: 15.1631, 
+                population: "4,040", 
+                region: "Östergötland County" 
+            },
+            Kinda: { 
+                lat: 58.0531, 
+                lng: 15.4631, 
+                population: "3,970", 
+                region: "Östergötland County" 
+            },
+            Åsele: { 
+                lat: 64.1731, 
+                lng: 17.3431, 
+                population: "3,900", 
+                region: "Västerbotten County" 
+            },
+            Nordmaling: { 
+                lat: 63.5731, 
+                lng: 19.5031, 
+                population: "3,830", 
+                region: "Västerbotten County" 
+            },
+            Bjurholm: { 
+                lat: 63.9431, 
+                lng: 19.1331, 
+                population: "3,760", 
+                region: "Västerbotten County" 
+            },
+            Vindeln: { 
+                lat: 64.2031, 
+                lng: 19.7631, 
+                population: "3,690", 
+                region: "Västerbotten County" 
+            },
+            Robertsfors: { 
+                lat: 63.8231, 
+                lng: 20.4131, 
+                population: "3,620", 
+                region: "Västerbotten County" 
+            },
+            Vännäs: { 
+                lat: 63.9131, 
+                lng: 19.7531, 
+                population: "3,550", 
+                region: "Västerbotten County" 
+            },
+            Burträsk: { 
+                lat: 64.1131, 
+                lng: 20.6631, 
+                population: "3,480", 
+                region: "Västerbotten County" 
+            },
+            Sävar: { 
+                lat: 63.8731, 
+                lng: 20.4431, 
+                population: "3,410", 
+                region: "Västerbotten County" 
+            },
+            Holmsund: { 
+                lat: 63.7031, 
+                lng: 20.3631, 
+                population: "3,340", 
+                region: "Västerbotten County" 
+            },
+            Hörnefors: { 
+                lat: 63.6631, 
+                lng: 20.2631, 
+                population: "3,270", 
+                region: "Västerbotten County" 
+            },
+            Rödålund: { 
+                lat: 63.6231, 
+                lng: 20.1631, 
+                population: "3,200", 
+                region: "Västerbotten County" 
+            },
+            Obbola: { 
+                lat: 63.7231, 
+                lng: 20.4031, 
+                population: "3,130", 
+                region: "Västerbotten County" 
+            },
+            Täfteå: { 
+                lat: 63.7431, 
+                lng: 20.5031, 
+                population: "3,060", 
+                region: "Västerbotten County" 
+            },
+            Bullmark: { 
+                lat: 63.7631, 
+                lng: 20.6031, 
+                population: "2,990", 
+                region: "Västerbotten County" 
+            },
+            Gimonäs: { 
+                lat: 63.7831, 
+                lng: 20.7031, 
+                population: "2,920", 
+                region: "Västerbotten County" 
+            },
+            Ersmark: { 
+                lat: 63.8031, 
+                lng: 20.8031, 
+                population: "2,850", 
+                region: "Västerbotten County" 
+            },
+            Rödålund: { 
+                lat: 63.8231, 
+                lng: 20.9031, 
+                population: "2,780", 
+                region: "Västerbotten County" 
+            },
+            Brännland: { 
+                lat: 63.8431, 
+                lng: 21.0031, 
+                population: "2,710", 
+                region: "Västerbotten County" 
+            },
+            Tuvan: { 
+                lat: 63.8631, 
+                lng: 21.1031, 
+                population: "2,640", 
+                region: "Västerbotten County" 
+            },
+            Rödålund: { 
+                lat: 63.8831, 
+                lng: 21.2031, 
+                population: "2,570", 
+                region: "Västerbotten County" 
+            },
+            Brännland: { 
+                lat: 63.9031, 
+                lng: 21.3031, 
+                population: "2,500", 
+                region: "Västerbotten County" 
+            },
+            Tuvan: { 
+                lat: 63.9231, 
+                lng: 21.4031, 
+                population: "2,430", 
+                region: "Västerbotten County" 
+            },
+            Rödålund: { 
+                lat: 63.9431, 
+                lng: 21.5031, 
+                population: "2,360", 
+                region: "Västerbotten County" 
+            },
+            Brännland: { 
+                lat: 63.9631, 
+                lng: 21.6031, 
+                population: "2,290", 
+                region: "Västerbotten County" 
+            },
+            Tuvan: { 
+                lat: 63.9831, 
+                lng: 21.7031, 
+                population: "2,220", 
+                region: "Västerbotten County" 
+            },
+            Rödålund: { 
+                lat: 64.0031, 
+                lng: 21.8031, 
+                population: "2,150", 
+                region: "Västerbotten County" 
             }
         };
         
@@ -352,12 +1897,10 @@
             marker.className = 'city-marker';
             marker.setAttribute('data-city', cityName);
             
-            // Size based on population (larger cities get bigger markers)
+            // Calculate size based on population with logarithmic scaling for better visual distribution
             const population = parseInt(cityInfo.population.replace(/,/g, ''));
-            let size = 6;
-            if (population > 500000) size = 12;
-            else if (population > 200000) size = 10;
-            else if (population > 100000) size = 8;
+            let baseSize = calculateMarkerSize(population);
+            let size = Math.max(3, baseSize * sizeMultiplier); // Minimum size of 3px
             
             marker.style.cssText = `
                 position: absolute;
@@ -372,7 +1915,15 @@
                 box-shadow: 0 2px 4px rgba(0,0,0,0.3);
                 z-index: 10;
                 transition: all 0.3s ease;
+                display: block;
             `;
+            
+            // Store original size for scaling
+            marker.setAttribute('data-base-size', baseSize);
+            marker.setAttribute('data-population', population);
+            
+            // Initialize visibility state
+            cityVisibility[cityName] = true;
             
             // Add event listeners
             marker.addEventListener('mouseenter', showTooltip);
@@ -381,6 +1932,50 @@
             marker.addEventListener('click', showCityInfo);
             
             return marker;
+        }
+        
+        // Calculate marker size based on population using logarithmic scaling
+        function calculateMarkerSize(population) {
+            if (population >= 1000000) return 16;      // 1M+ people
+            if (population >= 500000) return 14;       // 500K+ people
+            if (population >= 200000) return 12;       // 200K+ people
+            if (population >= 100000) return 10;       // 100K+ people
+            if (population >= 50000) return 8;         // 50K+ people
+            if (population >= 20000) return 6;         // 20K+ people
+            if (population >= 10000) return 5;         // 10K+ people
+            if (population >= 5000) return 4;          // 5K+ people
+            return 3;                                  // Under 5K people
+        }
+        
+        // Update marker sizes based on slider value
+        function updateMarkerSizes(multiplier) {
+            sizeMultiplier = parseFloat(multiplier);
+            document.getElementById('sizeValue').textContent = multiplier + 'x';
+            
+            // Update all existing markers
+            const markers = document.querySelectorAll('.city-marker');
+            markers.forEach(marker => {
+                const baseSize = parseFloat(marker.getAttribute('data-base-size'));
+                const newSize = Math.max(3, baseSize * sizeMultiplier);
+                
+                marker.style.width = newSize + 'px';
+                marker.style.height = newSize + 'px';
+                
+                // Update position to keep marker centered
+                const rect = marker.parentElement.getBoundingClientRect();
+                const currentLeft = parseFloat(marker.style.left);
+                const currentTop = parseFloat(marker.style.top);
+                
+                // Recalculate position based on original coordinates
+                const cityName = marker.getAttribute('data-city');
+                const cityInfo = cityData[cityName];
+                if (cityInfo) {
+                    const mapImg = document.getElementById('sweden-map');
+                    const position = gpsToMapCoordinates(cityInfo.lat, cityInfo.lng, mapImg);
+                    marker.style.left = (position.x - newSize/2) + 'px';
+                    marker.style.top = (position.y - newSize/2) + 'px';
+                }
+            });
         }
         
         // Add calibration markers for debugging
@@ -461,28 +2056,297 @@
                 return popB - popA;
             });
             
-            sortedCities.forEach(([cityName, cityInfo]) => {
+            sortedCities.forEach(([cityName, cityInfo], index) => {
                 const cityItem = document.createElement('div');
                 cityItem.className = 'city-item';
                 cityItem.setAttribute('data-city', cityName);
                 
+                // Add population-based visual indicator
+                const population = parseInt(cityInfo.population.replace(/,/g, ''));
+                const markerSize = calculateMarkerSize(population);
+                const sizeIndicator = `<div style="display: inline-block; width: ${markerSize}px; height: ${markerSize}px; background: #FF5722; border-radius: 50%; margin-right: 8px; vertical-align: middle; border: 1px solid white; box-shadow: 0 1px 2px rgba(0,0,0,0.2);"></div>`;
+                
+                // Add ranking number
+                const ranking = index + 1;
+                const rankBadge = `<span style="display: inline-block; background: #007acc; color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; margin-right: 8px; min-width: 20px; text-align: center;">#${ranking}</span>`;
+                
                 cityItem.innerHTML = `
-                    <div class="city-name">${cityName}</div>
-                    <div class="city-details">
-                        <div>Population: ${cityInfo.population}</div>
-                        <div>Region: ${cityInfo.region}</div>
-                        <div>GPS: <span class="coordinates">${cityInfo.lat}°N, ${cityInfo.lng}°E</span></div>
+                    <div class="city-content">
+                        <div class="city-name">${rankBadge}${sizeIndicator}${cityName}</div>
+                        <div class="city-details">
+                            <div>Population: ${cityInfo.population}</div>
+                            <div>Region: ${cityInfo.region}</div>
+                            <div>GPS: <span class="coordinates">${cityInfo.lat}°N, ${cityInfo.lng}°E</span></div>
+                        </div>
                     </div>
+                    <button class="city-toggle" onclick="toggleCityVisibility('${cityName}', this)" data-city="${cityName}">
+                        SHOW
+                    </button>
                 `;
                 
-                // Add click event to highlight city on map
-                cityItem.addEventListener('click', () => highlightCity(cityName));
+                // Add click event to highlight city on map (only for city content, not toggle button)
+                const cityContent = cityItem.querySelector('.city-content');
+                cityContent.addEventListener('click', () => highlightCity(cityName));
                 
                 cityList.appendChild(cityItem);
             });
             
             // Update city count
             cityCount.textContent = Object.keys(cityData).length;
+            document.getElementById('totalCount').textContent = Object.keys(cityData).length;
+            updateVisibilityCounter();
+        }
+        
+        // Toggle individual city visibility
+        function toggleCityVisibility(cityName, buttonElement) {
+            const isVisible = cityVisibility[cityName];
+            cityVisibility[cityName] = !isVisible;
+            
+            // Update map marker
+            const marker = document.querySelector(`.city-marker[data-city="${cityName}"]`);
+            if (marker) {
+                marker.style.display = cityVisibility[cityName] ? 'block' : 'none';
+            }
+            
+            // Update button and city item appearance
+            const cityItem = buttonElement.closest('.city-item');
+            if (cityVisibility[cityName]) {
+                buttonElement.textContent = 'SHOW';
+                buttonElement.classList.remove('hidden');
+                cityItem.classList.remove('hidden');
+            } else {
+                buttonElement.textContent = 'HIDE';
+                buttonElement.classList.add('hidden');
+                cityItem.classList.add('hidden');
+            }
+            
+            updateVisibilityCounter();
+        }
+        
+        // Show all cities
+        function showAllCities() {
+            // Clear all filters when showing all
+            populationFilterValue = null;
+            longitudeFilterValue = null;
+            latitudeFilterValue = null;
+            document.getElementById('populationFilter').value = '';
+            document.getElementById('longitudeFilter').value = '';
+            document.getElementById('latitudeFilter').value = '';
+            
+            Object.keys(cityData).forEach(cityName => {
+                cityVisibility[cityName] = true;
+                
+                // Update map marker
+                const marker = document.querySelector(`.city-marker[data-city="${cityName}"]`);
+                if (marker) {
+                    marker.style.display = 'block';
+                }
+                
+                // Update button and city item
+                const button = document.querySelector(`.city-toggle[data-city="${cityName}"]`);
+                const cityItem = button?.closest('.city-item');
+                if (button) {
+                    button.textContent = 'SHOW';
+                    button.classList.remove('hidden');
+                }
+                if (cityItem) {
+                    cityItem.classList.remove('hidden');
+                }
+            });
+            
+            updateVisibilityCounter();
+            updateFilterStatus();
+        }
+        
+        // Hide all cities
+        function hideAllCities() {
+            Object.keys(cityData).forEach(cityName => {
+                cityVisibility[cityName] = false;
+                
+                // Update map marker
+                const marker = document.querySelector(`.city-marker[data-city="${cityName}"]`);
+                if (marker) {
+                    marker.style.display = 'none';
+                }
+                
+                // Update button and city item
+                const button = document.querySelector(`.city-toggle[data-city="${cityName}"]`);
+                const cityItem = button?.closest('.city-item');
+                if (button) {
+                    button.textContent = 'HIDE';
+                    button.classList.add('hidden');
+                }
+                if (cityItem) {
+                    cityItem.classList.add('hidden');
+                }
+            });
+            
+            updateVisibilityCounter();
+        }
+        
+        // Update visibility counter
+        function updateVisibilityCounter() {
+            const visibleCount = Object.values(cityVisibility).filter(visible => visible).length;
+            document.getElementById('visibleCount').textContent = visibleCount;
+        }
+        
+        // Apply all filters (combined population, longitude, and latitude)
+        function applyFilters() {
+            const populationInput = document.getElementById('populationFilter').value;
+            const longitudeInput = document.getElementById('longitudeFilter').value;
+            const latitudeInput = document.getElementById('latitudeFilter').value;
+            
+            populationFilterValue = populationInput ? parseInt(populationInput) : null;
+            longitudeFilterValue = longitudeInput ? parseFloat(longitudeInput) : null;
+            latitudeFilterValue = latitudeInput ? parseFloat(latitudeInput) : null;
+            
+            console.log('Filters:', {
+                population: populationFilterValue,
+                longitude: longitudeFilterValue,
+                latitude: latitudeFilterValue
+            });
+            
+            let visibleCount = 0;
+            
+            Object.entries(cityData).forEach(([cityName, cityInfo]) => {
+                const population = parseInt(cityInfo.population.replace(/,/g, ''));
+                const longitude = parseFloat(cityInfo.lng);
+                const latitude = parseFloat(cityInfo.lat);
+                
+                // Check all filters
+                const passesPopulationFilter = populationFilterValue === null || population <= populationFilterValue;
+                const passesLongitudeFilter = longitudeFilterValue === null || longitude >= longitudeFilterValue;
+                const passesLatitudeFilter = latitudeFilterValue === null || latitude >= latitudeFilterValue;
+                
+                const shouldBeVisible = passesPopulationFilter && passesLongitudeFilter && passesLatitudeFilter;
+                
+                if (latitudeFilterValue !== null && cityName === 'Stockholm') {
+                    console.log('Stockholm check:', {
+                        latitude: latitude,
+                        filterValue: latitudeFilterValue,
+                        passes: passesLatitudeFilter,
+                        visible: shouldBeVisible
+                    });
+                }
+                
+                if (shouldBeVisible) visibleCount++;
+                
+                // Update visibility state
+                cityVisibility[cityName] = shouldBeVisible;
+                
+                // Update map marker
+                const marker = document.querySelector(`.city-marker[data-city="${cityName}"]`);
+                if (marker) {
+                    marker.style.display = shouldBeVisible ? 'block' : 'none';
+                }
+                
+                // Update button and city item
+                const button = document.querySelector(`.city-toggle[data-city="${cityName}"]`);
+                const cityItem = button?.closest('.city-item');
+                
+                if (button) {
+                    if (shouldBeVisible) {
+                        button.textContent = 'SHOW';
+                        button.classList.remove('hidden');
+                    } else {
+                        button.textContent = 'HIDE';
+                        button.classList.add('hidden');
+                    }
+                }
+                
+                if (cityItem) {
+                    if (shouldBeVisible) {
+                        cityItem.classList.remove('hidden');
+                    } else {
+                        cityItem.classList.add('hidden');
+                    }
+                }
+            });
+            
+            console.log('Visible cities after filter:', visibleCount);
+            
+            updateVisibilityCounter();
+            updateFilterStatus();
+        }
+        
+        // Apply population filter (legacy function, now calls applyFilters)
+        function applyPopulationFilter(maxPopulation) {
+            populationFilterValue = maxPopulation ? parseInt(maxPopulation) : null;
+            applyFilters();
+        }
+        
+        // Set population filter with predefined value
+        function setPopulationFilter(value) {
+            document.getElementById('populationFilter').value = value;
+            applyFilters();
+        }
+        
+        // Set longitude filter with predefined value
+        function setLongitudeFilter(value) {
+            document.getElementById('longitudeFilter').value = value;
+            applyFilters();
+        }
+        
+        // Clear population filter
+        function clearPopulationFilter() {
+            document.getElementById('populationFilter').value = '';
+            populationFilterValue = null;
+            applyFilters();
+        }
+        
+        // Set latitude filter with predefined value
+        function setLatitudeFilter(value) {
+            console.log('Setting latitude filter to:', value);
+            document.getElementById('latitudeFilter').value = value;
+            applyFilters();
+        }
+        
+        // Clear longitude filter
+        function clearLongitudeFilter() {
+            document.getElementById('longitudeFilter').value = '';
+            longitudeFilterValue = null;
+            applyFilters();
+        }
+        
+        // Clear latitude filter
+        function clearLatitudeFilter() {
+            document.getElementById('latitudeFilter').value = '';
+            latitudeFilterValue = null;
+            applyFilters();
+        }
+        
+        // Update filter status display
+        function updateFilterStatus() {
+            const populationInput = document.getElementById('populationFilter');
+            const longitudeInput = document.getElementById('longitudeFilter');
+            const latitudeInput = document.getElementById('latitudeFilter');
+            
+            // Population filter styling
+            if (populationFilterValue !== null) {
+                populationInput.style.borderColor = '#007acc';
+                populationInput.style.backgroundColor = '#f0f8ff';
+            } else {
+                populationInput.style.borderColor = '#ddd';
+                populationInput.style.backgroundColor = 'white';
+            }
+            
+            // Longitude filter styling
+            if (longitudeFilterValue !== null) {
+                longitudeInput.style.borderColor = '#28a745';
+                longitudeInput.style.backgroundColor = '#f0fff0';
+            } else {
+                longitudeInput.style.borderColor = '#ddd';
+                longitudeInput.style.backgroundColor = 'white';
+            }
+            
+            // Latitude filter styling
+            if (latitudeFilterValue !== null) {
+                latitudeInput.style.borderColor = '#ffc107';
+                latitudeInput.style.backgroundColor = '#fffbf0';
+            } else {
+                latitudeInput.style.borderColor = '#ddd';
+                latitudeInput.style.backgroundColor = 'white';
+            }
         }
         
         // Highlight a city on the map
