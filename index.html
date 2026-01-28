@@ -313,13 +313,16 @@
         <div class="map-container">
             <div class="map-wrapper">
                 <!-- country SVG Map from SimpleMaps -->
-                <div style="position: relative; display: inline-block;">
-                    <img id="country-map" 
+                <div style="position: relative; display: inline-block; width: 800px;">
+                    <img id="sweden-map" 
                          src="https://simplemaps.com/static/svg/country/se/admin1/se.svg" 
                          alt="Sweden Map" 
-                         style="width: 800px; height: auto; border: 2px solid #333; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+                         style="width: 100%; height: auto; display: block; border: 2px solid #333; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
                     
-                    <!-- City markers will be dynamically generated here -->
+                    <!-- City markers container -->
+                    <div id="markers-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: block;">
+                        <!-- City markers will be dynamically generated here -->
+                    </div>
                 </div>
             </div>
             
@@ -1916,6 +1919,7 @@
                 z-index: 10;
                 transition: all 0.3s ease;
                 display: block;
+                pointer-events: all;
             `;
             
             // Store original size for scaling
@@ -2011,23 +2015,47 @@
         function initializeMap() {
             const mapImg = document.getElementById('sweden-map');
             const mapWrapper = mapImg.parentElement;
+            const markersContainer = document.getElementById('markers-container');
             
             // Wait for image to load
             mapImg.onload = function() {
                 console.log('Map loaded, dimensions:', mapImg.getBoundingClientRect());
+                const rect = mapImg.getBoundingClientRect();
+                const mapImgParent = mapImg.parentElement;
+                
+                // Set parent and container height to match image
+                mapImgParent.style.height = rect.height + 'px';
+                markersContainer.style.height = rect.height + 'px';
+                console.log('Map actual size:', rect.width, 'x', rect.height);
                 
                 // Clear existing markers
-                const existingMarkers = mapWrapper.querySelectorAll('.city-marker, [title*="North"], [title*="South"], [title*="West"], [title*="East"]');
-                existingMarkers.forEach(marker => marker.remove());
+                markersContainer.innerHTML = '';
+                
+                // Add test marker first to verify positioning
+                const testMarker = document.createElement('div');
+                testMarker.style.cssText = `
+                    position: absolute;
+                    left: 50px;
+                    top: 50px;
+                    width: 20px;
+                    height: 20px;
+                    background: red;
+                    border-radius: 50%;
+                    z-index: 100;
+                    pointer-events: all;
+                `;
+                testMarker.title = 'Test marker at 50,50';
+                markersContainer.appendChild(testMarker);
+                console.log('Added test marker');
                 
                 // Add calibration markers for debugging
-                addCalibrationMarkers(mapWrapper, mapImg);
+                addCalibrationMarkers(markersContainer, mapImg);
                 
                 // Create markers for each city
                 Object.entries(cityData).forEach(([cityName, cityInfo]) => {
                     const position = gpsToMapCoordinates(cityInfo.lat, cityInfo.lng, mapImg);
                     const marker = createCityMarker(cityName, cityInfo, position);
-                    mapWrapper.appendChild(marker);
+                    markersContainer.appendChild(marker);
                 });
                 
                 // Populate city data panel
